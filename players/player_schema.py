@@ -1,32 +1,18 @@
-from lib.db_connection import get_db_connection_with_database
+from marshmallow import Schema, fields, validate, ValidationError
 
-def drop_players_table():
-    conn = get_db_connection_with_database()
-    cursor = conn.cursor()
-    
-    cursor.execute("DROP TABLE IF EXISTS players")
-    
-    conn.commit()
-    cursor.close()
-    conn.close()
+class PlayerSchema(Schema):
+    first_name = fields.Str(required=True, validate=validate.Length(min=1))
+    last_name = fields.Str(required=True, validate=validate.Length(min=1))
+    apt = fields.Int(required=True, validate=validate.Range(min=0))
+    set = fields.Int(required=True, validate=validate.Range(min=0))
+    position = fields.Str(required=True, validate=validate.OneOf(['defender', 'midfielder', 'attacker']))
+    national_association = fields.Str(required=True, validate=validate.OneOf(['England', 'Northern Ireland', 'Scotland', 'Wales']))
 
-def create_players_table():
-    conn = get_db_connection_with_database()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS players (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        first_name VARCHAR(100) NOT NULL,
-        last_name VARCHAR(100) NOT NULL,
-        apt INT NOT NULL,
-        `set` INT NOT NULL,
-        position ENUM('defender', 'midfielder', 'attacker') NOT NULL,
-        national_association ENUM('England', 'Northern Ireland', 'Scotland', 'Wales') NOT NULL,
-        avg FLOAT GENERATED ALWAYS AS ((apt + `set`) / 2) STORED
-    )
-    """)
-    
-    conn.commit()
-    cursor.close()
-    conn.close()
+# Function to validate player data
+def validate_player_data(data):
+    schema = PlayerSchema()
+    try:
+        result = schema.load(data)
+        return True, result
+    except ValidationError as err:
+        return False, err.messages

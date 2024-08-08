@@ -25,6 +25,37 @@ def get_db_connection_with_database():
         host=os.getenv("DB_HOST"),
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
-        database='football'
+        database=os.getenv("DB_NAME")
     )
     return connection
+
+def drop_players_table():
+    conn = get_db_connection_with_database()
+    cursor = conn.cursor()
+    
+    cursor.execute("DROP TABLE IF EXISTS players")
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def create_players_table():
+    conn = get_db_connection_with_database()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS players (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        apt INT NOT NULL,
+        `set` INT NOT NULL,
+        position ENUM('defender', 'midfielder', 'attacker') NOT NULL,
+        national_association ENUM('England', 'Northern Ireland', 'Scotland', 'Wales') NOT NULL,
+        avg FLOAT GENERATED ALWAYS AS ((apt + `set`) / 2) STORED
+    )
+    """)
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
